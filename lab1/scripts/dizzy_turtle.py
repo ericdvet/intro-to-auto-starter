@@ -6,6 +6,9 @@ from math import atan2, cos, pi, sin, sqrt
 # access to the data structure. 
 from geometry_msgs.msg import Twist
 
+from math import sin, cos
+import random
+
 # TODO: SET FORMULA CONSTANTS HERE
 ANGULAR_Z = 0
 V = 0
@@ -34,7 +37,12 @@ class DizzyTurtle():
         self.cmd_vel_pub = rospy.Publisher("/turtle1/cmd_vel", Twist, queue_size=10)
 
 	    #TODO: CREATE INSTANCE OF TWIST MESSAGE TYPE
-  
+        dizzyTwist = Twist()
+        velocity = random.randint(1,10)
+        angularVelocity = random.randint(1,10)
+        dizzyTwist.angular.z = angularVelocity
+
+        startingTime = rospy.get_time()
 
         # we define a rate to recieve messages at per second. In other words,
         # our run rate is 10Hz. To be clear, this 10 has nothing to do 
@@ -47,10 +55,16 @@ class DizzyTurtle():
         # We can run the main loop of the Node while we don't get a Ctrl+C input
         while not rospy.is_shutdown():
 	        # TODO: CALCULATE vx and vy WITH SPIRAL FORMULA
+            time = (rospy.get_time() - startingTime) * 0.1
+            vx = (velocity * cos(angularVelocity * time)) - (angularVelocity * velocity * time * sin(angularVelocity * time))
+            vy = (velocity * sin(angularVelocity * time)) + (angularVelocity * velocity * time * cos(angularVelocity * time))
 
             # TODO: ASSIGN VALUES TO TWIST
+            dizzyTwist.linear.x = vx * time
+            dizzyTwist.linear.y = vy * time
             
             # TODO: PUBLISH TWIST MESSAGE TO CMD_VEL WITH PUBLISHER HANDLE
+            self.cmd_vel_pub.publish(dizzyTwist)
             
             # sleep for 10Hz (0.1s) and loop again
             rate.sleep() 
