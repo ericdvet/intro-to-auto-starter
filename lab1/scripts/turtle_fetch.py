@@ -39,12 +39,12 @@ class TurtleFetch():
 
 
         # TODO: CREATE AND INSTANCE OF self.pose AND ASSIGN IT TO AN EMPTY Pose TYPE
-     
+        self.pose = Pose()
 
         rospy.Subscriber('/turtle1/pose', Pose, self.pose_callback)
 
 	    #TODO: CREATE INSTANCE OF TWIST MESSAGE TYPE
-
+        fetchTwist = Twist()
 
         # we define a rate to recieve messages at per second. In other words,
         # our run rate is 10Hz. To be clear, this 10 has nothing to do 
@@ -55,19 +55,25 @@ class TurtleFetch():
         # We can run the main loop of the Node while we don't get a Ctrl+C input
         while not rospy.is_shutdown():
             # TODO: CHECK IF CURRENT x AND y ARE WITHIN THE TOLERANCE AND PUBLISH THE EMPTY TWIST IF THEY ARE
+            if ( (abs(self.x_d - self.pose.x) <= self.tolerance) and (abs(self.y_d - self.pose.y) <= self.tolerance) ):
+                self.cmd_vel_pub.publish(fetchTwist)
                 # TODO: BREAK OUT OF THE TOLERANCE CHECK IF STATEMENT AFTER PUBLISHING THE TWIST
-                
+                break
 
 	        # TODO: CALCULATE vx 
+            vx = 1.5 * sqrt( pow(self.x_d - self.pose.x, 2) + pow(self.y_d - self.pose.y, 2))
           
             # TODO: CALCULATE wz
+            wz = 4 * (atan2(self.y_d - self.pose.y, self.x_d - self.pose.x) - self.pose.theta)
           
             # TODO: ASSIGN vx TO Twist CREATED EARLIER
-
+            fetchTwist.linear.x = vx
           
             # TODO: ASSIGN wz TO Twist CREATED EARLIER
+            fetchTwist.angular.z = wz
            
             # TODO: PUBLISH Twist WITH self.cmd_vel_pub.publish()
+            self.cmd_vel_pub.publish(fetchTwist)
             
             # sleep for 10Hz (0.1s) and loop again
             rate.sleep() 
@@ -76,6 +82,7 @@ class TurtleFetch():
     # /turtle1/pose topic. The data parameter will be of Pose type
     def pose_callback(self, data):
         # TODO: SAVE 'data' IN THE self.pose VARIABLE WE CREATED IN __init__()
+        self.pose = data
        
         pass
 
@@ -92,16 +99,20 @@ class TurtleFetch():
 
 # this is the "main" in python
 if __name__ == "__main__":
-    user_x = float(input("Enter X [0-10]: "))
     # TODO Ask for y, and tolerance values:
-
+    user_x = input("Input X [0-10]:")
+    user_x = float(user_x)
+    user_y = input("Input Y [0-10]:")
+    user_y = float(user_y)
+    tolerance = input("Input Tolerance [0-1]:")
+    tolerance = float(tolerance)
 
     # run the TurtleFetch by initializing the class. We use
     # a try except block (similar to try-catch) to make sure 
     # we can run the turtle controller node safely
     try:
         # TODO: PASS CLASS PARAMTERS TO INITIALIZATION:
-        TurtleFetch(user_x, )
+        TurtleFetch(user_x, user_y, tolerance)
     except Exception as e:
         rospy.logerr(e)
     except:
