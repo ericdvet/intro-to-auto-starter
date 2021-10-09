@@ -5,7 +5,7 @@
 # import rospy libaray for ROS Support
 import rospy
 # import Greeting message data type. 
-from lab1_prelab.msg import Greeting
+from lab2_prelab.msg import Greeting
 
 # HelloNode class definition
 class HelloNode:
