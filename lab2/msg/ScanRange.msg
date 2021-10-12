@@ -1,0 +1,2 @@
+float32 closestRange
+float32 farthestRange
