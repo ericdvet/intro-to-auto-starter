@@ -2,12 +2,12 @@
 import rospy
 
 # TODO: import ROS msg types and libraries
-from std_msgs.msg import String, Float32, Bool
 import numpy as np
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from ackermann_msgs.msg import AckermannDriveStamped
-from math import cos, pi
+from std_msgs.msg import Bool
+from math import cos
 
 class Safety(object):
     """
@@ -38,37 +38,37 @@ class Safety(object):
 
     def scan_callback(self, scan_msg):
         # TODO: calculate TTC
-        ttc = []
-        currentAngle = scan_msg.angle_min
-        for i, j in enumerate(scan_msg.ranges):
-            currentAngle += scan_msg.angle_increment
-            ttci = 0
-            if j > scan_msg.range_min and j < scan_msg.range_max and j != np.nan and j != np.inf:
-                if (self.speed == 0):
-                    ttci = 0
-                elif (max(-1 * self.speed * cos(currentAngle), 0) ) != 0:
-                        print(max(-1 * self.speed * cos(currentAngle), 0) )
-                        #ttci = j / (max(-1.0 * self.speed * cos(currentAngle), 0.0) )
-                        ttci = j / (self.speed * cos(currentAngle))
-            ttc.append(ttci)
-
-        self.brake_bool = False
-        for i in ttc:
-            if i < 1 and i != 0:
-                print("crash", i)
-                self.brake_bool = True
-
-        
+        tts = []
+        angle = scan_msg.angle_min
+        for i, r in enumerate(scan_msg.ranges):
+            ttsi = 0
+            if r > scan_msg.range_min and r < scan_msg.range_max and r != np.nan and r != np.inf:
+                if max(-1.0 * self.speed * cos(angle), 0) == 0:
+                    ttsi = 0
+                else:
+                    ttsi = r /  max(-1.0 * self.speed * cos(angle), 0)
+            tts.append(ttsi)
+            angle += scan_msg.angle_increment
+            if angle > scan_msg.angle_max:
+                break
+        #print(tts[0])
+            
 
         # TODO: publish brake message and publish controller bool
+        self.brake_bool.data = False
+        for i in tts:
+            if i < 1 and i != 0:
+                #print("crash", i)
+                self.brake_bool.data = True
 
-    def publish(self):
-        rate = rospy.Rate(10)
+        self.pub_brake.publish(self.brake)
+        self.pub_brake_bool.publish(self.brake_bool)
+
+        """rate = rospy.Rate(10)
         while not rospy.is_shutdown():
-            #print(self.brake_bool)
             self.pub_brake.publish(self.brake)
             self.pub_brake_bool.publish(self.brake_bool)
-            rate.sleep()
+            rate.sleep()"""
 
         pass
 
@@ -76,10 +76,4 @@ class Safety(object):
 if __name__ == '__main__':
     rospy.init_node('safety_node')
     safety_node = Safety()
-    try:
-        print("Starting the Safety Node!")
-        safety_node.publish()
-        pass
-    except rospy.ROSInterruptException:
-        pass
-    rospy.spin()
+    rospy.spin() 
