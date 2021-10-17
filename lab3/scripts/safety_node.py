@@ -28,8 +28,8 @@ class Safety(object):
         self.pub_brake_bool = rospy.Publisher("brake_bool", Bool, queue_size=10)
         rospy.Subscriber("scan", LaserScan, self.scan_callback)
         rospy.Subscriber("odom", Odometry, self.odom_callback)
-        #self.ttc = []
-        self.brake = Bool()
+        self.brake = AckermannDriveStamped()
+        self.brake_bool = Bool()
         pass
 
     def odom_callback(self, odom_msg):
@@ -44,17 +44,19 @@ class Safety(object):
             currentAngle += scan_msg.angle_increment
             ttci = 0
             if j > scan_msg.range_min and j < scan_msg.range_max and j != np.nan and j != np.inf:
-                if (max(-1 * self.speed * cos(currentAngle), 0)) == 0:
+                if (self.speed == 0):
                     ttci = 0
-                else:
-                    ttci = j / (max(-1 * self.speed * cos(currentAngle), 0) )
+                elif (max(-1 * self.speed * cos(currentAngle), 0) ) != 0:
+                        print(max(-1 * self.speed * cos(currentAngle), 0) )
+                        #ttci = j / (max(-1.0 * self.speed * cos(currentAngle), 0.0) )
+                        ttci = j / (self.speed * cos(currentAngle))
             ttc.append(ttci)
-        #print(ttc[0], ttc[1])
 
+        self.brake_bool = False
         for i in ttc:
-            if i < 1:
-                brake = Bool()
-                self.brake = True
+            if i < 1 and i != 0:
+                print("crash", i)
+                self.brake_bool = True
 
         
 
@@ -63,7 +65,9 @@ class Safety(object):
     def publish(self):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
-            self.pub_brake_bool.publish(self.brake)
+            #print(self.brake_bool)
+            self.pub_brake.publish(self.brake)
+            self.pub_brake_bool.publish(self.brake_bool)
             rate.sleep()
 
         pass
@@ -72,10 +76,10 @@ class Safety(object):
 if __name__ == '__main__':
     rospy.init_node('safety_node')
     safety_node = Safety()
-    """try:
+    try:
         print("Starting the Safety Node!")
         safety_node.publish()
         pass
     except rospy.ROSInterruptException:
-        pass"""
+        pass
     rospy.spin()
