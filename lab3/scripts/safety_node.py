@@ -38,37 +38,63 @@ class Safety(object):
 
     def scan_callback(self, scan_msg):
         # TODO: calculate TTC
-        tts = []
+
+        if self.speed >= 0.1:
+            minRange = 1000.0
+            angle = scan_msg.angle_min
+            for i in scan_msg.ranges:
+                if angle >= scan_msg.angle_min / 2.0:
+                    if i > scan_msg.range_min and i < scan_msg.range_max and i != np.nan and i != np.inf:
+                        if i < minRange:
+                            minRange = i
+                            minAngle = angle
+                angle += scan_msg.angle_increment 
+                if angle >= scan_msg.angle_max  / 2.0:
+                    break
+            tts = minRange / (self.speed * cos(minAngle))
+            #print(minRange, minAngle, tts)
+            self.brake_bool.data = False
+            if tts < 0.5:
+                self.brake_bool.data = True
+                self.brake.drive.speed = 0
+                self.pub_brake.publish(self.brake)
+                self.pub_brake_bool.publish(self.brake_bool)
+                self.brake_bool.data = False
+
+
+        """tts = []
         angle = scan_msg.angle_min
         for i, r in enumerate(scan_msg.ranges):
-            ttsi = 0
-            if r > scan_msg.range_min and r < scan_msg.range_max and r != np.nan and r != np.inf:
-                if max(-1.0 * self.speed * cos(angle), 0) == 0:
-                    ttsi = 0
-                else:
-                    ttsi = r /  max(-1.0 * self.speed * cos(angle), 0)
-            tts.append(ttsi)
-            angle += scan_msg.angle_increment
-            if angle > scan_msg.angle_max:
+            if angle >= scan_msg.angle_min / 2.0:
+                ttsi = np.inf
+                if r > scan_msg.range_min and r < scan_msg.range_max and r != np.nan and r != np.inf:
+                    ttsi = r /  max(self.speed * cos(angle), 0)
+                if r > scan_msg.range_min and r < scan_msg.range_max and r != np.nan and r != np.inf:
+                    if max(1.0 * self.speed * cos(angle), 0) == 0 or self.speed == 0:
+                        ttsi = np.inf
+                    else:
+                        ttsi = r /  max(1.0 * self.speed * cos(angle), 0)
+                tts.append(ttsi)
+                angle += scan_msg.angle_increment 
+                #print(i, r, self.speed, angle, ttsi)
+            angle += scan_msg.angle_increment 
+            if angle >= scan_msg.angle_max  / 2.0:
                 break
-        #print(tts[0])
+        
+        #print(tts)
             
 
         # TODO: publish brake message and publish controller bool
         self.brake_bool.data = False
         for i in tts:
-            if i < 1 and i != 0:
-                #print("crash", i)
+            if i < 0.3 and i != 0:
+                print(i)
                 self.brake_bool.data = True
 
+        self.brake.drive.speed = 0
         self.pub_brake.publish(self.brake)
         self.pub_brake_bool.publish(self.brake_bool)
-
-        """rate = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            self.pub_brake.publish(self.brake)
-            self.pub_brake_bool.publish(self.brake_bool)
-            rate.sleep()"""
+        self.brake_bool.data = False"""
 
         pass
 
