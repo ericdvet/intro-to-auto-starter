@@ -58,8 +58,8 @@ class Safety(object):
                 self.brake_bool.data = True
                 self.brake.drive.speed = 0
                 self.pub_brake.publish(self.brake)
-                self.pub_brake_bool.publish(self.brake_bool)
-                self.brake_bool.data = False
+            self.pub_brake_bool.publish(self.brake_bool)
+            self.brake_bool.data = False
 
         pass
 
