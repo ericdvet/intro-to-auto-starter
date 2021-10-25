@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-	<node name="talker" pkg="lab4-launch-sample" type="talker.py" output="screen"/>
-
-	<node name="listener" pkg="lab4-launch-sample" type="listener.py" output="screen"/>
+	<node name="perception_node" pkg="lab4-launch-sample" type="perception_node.py" output="screen"/>
+	<node name="control_node" pkg="lab4-launch-sample" type="control_node.py" output="screen"/>
 </launch>

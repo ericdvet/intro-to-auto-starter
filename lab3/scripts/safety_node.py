@@ -67,4 +67,4 @@ class Safety(object):
 if __name__ == '__main__':
     rospy.init_node('safety_node')
     safety_node = Safety()
-    rospy.spin() 
+    rospy.spin()
