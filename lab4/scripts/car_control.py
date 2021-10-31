@@ -3,8 +3,9 @@ import rospy
 from lab4.msg import PIDInput
 from ackermann_msgs.msg import AckermannDriveStamped
 from geometry_msgs.msg import PoseStamped
+import math
 
-ERROR_SCALE = 3 # TODO: ASSIGN A CONSTANT FOR HOW MUCH TO SCALE THE RAW ERROR
+ERROR_SCALE = 1 # TODO: ASSIGN A CONSTANT FOR HOW MUCH TO SCALE THE RAW ERROR
 MAX_STEERING_ANGLE = 4.18
 
 class CarControl:
@@ -24,8 +25,8 @@ class CarControl:
         rospy.Subscriber('/dist_error', PIDInput, self.run_pid)
 
         # TODO: INITIALIZE KP AND KD CLASS VARIABLES FROM CONSTRUCTOR PARAMETERS
-        #kP = 1.2
-        #kD = 20
+        self.kP = 1
+        self.kD = 0.6
 
 
         # assign shutdown functon 
@@ -35,12 +36,11 @@ class CarControl:
     def run_pid(self, pid_input):
         # TODO: SCALE ERROR BY SOME CONSTANT
         SCALED_ERROR = pid_input.angle_error * ERROR_SCALE
-        dERROR = SCALED_ERROR - self.previousError
+        dERROR = (self.previousError - SCALED_ERROR)
 
         # TODO: CALCULATE A STEERING ANGLE BASED BY PASSING THE ERROR INTO THE PID FUNCTION
-        steering_angle = (kP * SCALED_ERROR) + (kP * dERROR)
-        #print(dERROR)
- 
+        steering_angle = (self.kP * SCALED_ERROR) + (self.kD * -1 * (self.previousError - SCALED_ERROR))
+        
         # TODO: UPDATE PREVIOUS ERROR FOR DERIVATIVE TERM
         self.previousError = SCALED_ERROR
 
@@ -53,13 +53,20 @@ class CarControl:
         # TODO: ASSIGN VALUES IN ACKERMANN MESSAGE 
         drive = AckermannDriveStamped()
         drive.drive.steering_angle = steering_angle
-        drive.drive.speed = 3
+        if (abs(pid_input.angle_error) < 0.3):
+            drive.drive.speed = 5
+        elif (abs(pid_input.angle_error) < 0.6):
+            drive.drive.speed = 3
+        else:
+            drive.drive.speed = 2
 
-        #print(steering_angle)
+        #print(SCALED_ERROR, self.previousError, dERROR)
     
         # TODO PUBLISH ACKERMANN DRIVE MESSAGE
         self.drive_pub.publish(drive)
+
         # OPTIONAL: TO IMPROVE YOUR WALL FOLLOWING TRY ADDING ADAPTIVE VELOCITY CONTROL
+
         pass
 
 
@@ -76,8 +83,8 @@ class CarControl:
 
 if __name__ == "__main__":
     #  TODO: USE USER INPUT TO TUNE KP AND KD, THEN HARDCODE ONCE TUNED
-    kP = float(input("Enter kP: "))
-    kD = float(input("Enter kD: "))
+    kP = 1#float(input("Enter kP: "))
+    kD = 1#float(input("Enter kD: "))
 
     print("### START WALL FOLLOW ###")
 
