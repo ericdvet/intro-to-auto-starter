@@ -25,7 +25,7 @@ class CarControl:
         rospy.Subscriber('/dist_error', PIDInput, self.run_pid)
 
         # TODO: INITIALIZE KP AND KD CLASS VARIABLES FROM CONSTRUCTOR PARAMETERS
-        self.kP = 1
+        self.kP = 1.2
         self.kD = 0.6
 
 
@@ -39,7 +39,7 @@ class CarControl:
         dERROR = (self.previousError - SCALED_ERROR)
 
         # TODO: CALCULATE A STEERING ANGLE BASED BY PASSING THE ERROR INTO THE PID FUNCTION
-        steering_angle = (self.kP * SCALED_ERROR) + (self.kD * -1 * (self.previousError - SCALED_ERROR))
+        steering_angle = (self.kP * SCALED_ERROR) + (self.kD * (self.previousError - SCALED_ERROR))
         
         # TODO: UPDATE PREVIOUS ERROR FOR DERIVATIVE TERM
         self.previousError = SCALED_ERROR
@@ -53,12 +53,19 @@ class CarControl:
         # TODO: ASSIGN VALUES IN ACKERMANN MESSAGE 
         drive = AckermannDriveStamped()
         drive.drive.steering_angle = steering_angle
-        if (abs(pid_input.angle_error) < 0.3):
+        speed = 1.0 / abs(pid_input.angle_error)
+        if (speed > 5):
+            drive.drive.speed = 5
+        elif (speed < 1):
+            drive.drive.speed = 2
+        else:
+            drive.drive.speed = speed
+        """if (abs(pid_input.angle_error) < 0.3):
             drive.drive.speed = 5
         elif (abs(pid_input.angle_error) < 0.6):
             drive.drive.speed = 3
         else:
-            drive.drive.speed = 2
+            drive.drive.speed = 2"""
 
         #print(SCALED_ERROR, self.previousError, dERROR)
     
